@@ -13,6 +13,14 @@ Hymba+ is a **modular hybrid Transformer–SSM architecture** with runnable core
 - Flash attention path wired via PyTorch SDP when enabled (requires CUDA).
 - GQA-compatible attention and vectorized MoE (batched expert matmul).
 - Nanochat-style training loop primitives (cosine LR, warmup, grad accumulation, bf16 autocast, grad clipping).
+Hymba+ is a **modular hybrid Transformer–SSM architecture** that targets flexible composition, modern training recipes, and production-ready optimization. This repository provides a **clean skeleton** plus a **critical review** of the supplied design docs, updated to 2026-era best practices.
+
+## What's in this repo
+
+- **`ARCHITECTURE.md`**: consolidated design + 2026-era updates and correctness cautions.
+- **`hymba_plus/`**: minimal, working registry + config loader + model scaffolding.
+- **`configs/`**: YAML configs matching the dataclass loader (nested → flat mapping).
+- **`training/`**: placeholders for pretrain/SFT/RL with clear extension points.
 
 ## Quick start
 
@@ -31,3 +39,11 @@ Open `notebooks/01_validation.ipynb` to verify:
 ## Repository status
 
 This is a **starter scaffold**. It runs, but it is **not** optimized for speed. See `ARCHITECTURE.md` for the critical review and 2026‑era roadmap.
+python -c "from hymba_plus.core.config import HymbaPlusConfig; cfg = HymbaPlusConfig.from_yaml('configs/hymba_plus.yaml'); print(cfg)"
+```
+
+## Repository status
+
+This repository intentionally **starts minimal**: the structure is production-aligned, but heavy kernels (FlashAttention3/Triton/FP8) are **not implemented**. The goal is to avoid false claims and to provide **clear extension points** for real kernels and training loops.
+
+See `ARCHITECTURE.md` for the full critique and an implementation roadmap.
