@@ -11,7 +11,8 @@ Hymba+ is a **modular hybrid Transformer–SSM architecture** with runnable core
 - Validation notebook with intermediate outputs and basic visualization.
 - Optional Triton gate-fusion kernel for the SSM gating path when CUDA + Triton are available.
 - Flash attention path wired via PyTorch SDP when enabled (requires CUDA).
-- Nanochat-style training loop primitives (cosine LR, warmup, grad accumulation, bf16 autocast).
+- GQA-compatible attention and vectorized MoE (batched expert matmul).
+- Nanochat-style training loop primitives (cosine LR, warmup, grad accumulation, bf16 autocast, grad clipping).
 
 ## Quick start
 

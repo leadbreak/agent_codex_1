@@ -62,6 +62,7 @@ This repository is built to:
 - **MoE**: vectorized routing + optional fused kernels.
 - **FlashAttention‑3**: use only with hardware‑valid FP8/FP16 paths and gated by runtime checks.
 - **Current repository** includes a minimal Triton gate‑fusion kernel as a first step toward SSM kernelization.
+- **Current repository** routes FlashAttention through PyTorch SDP, which selects Flash kernels on supported CUDA builds.
 
 ### 3.4 Training + alignment
 - **Stage 0**: data curation and tokenizer lock‑in (single tokenizer across chat + time‑series).
@@ -81,7 +82,8 @@ This repo intentionally implements **only the core scaffolding** to make the sys
 - **Clear extension points** for kernels, MoE, and training.
 - **Triton gate‑fusion kernel** used in the SSM gating path when available.
 - **Flash attention path** via PyTorch SDP for CUDA builds (not a full FA3 implementation).
-- **Nanochat‑style training loop primitives** (cosine schedule, warmup, bf16 autocast, grad accumulation).
+- **Nanochat‑style training loop primitives** (cosine schedule, warmup, bf16 autocast, grad accumulation, grad clipping).
+- **Vectorized MoE** with batched expert matmul (no Python token loops).
 
 Everything else is left as **explicit TODOs**, not marketing claims.
 
