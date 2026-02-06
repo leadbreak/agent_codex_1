@@ -10,6 +10,9 @@ import yaml
 @dataclass
 class AttentionConfig:
     type: str = "standard"
+    num_heads: int = 8
+    num_kv_heads: int = 4
+    dropout: float = 0.0
     use_flash: bool = False
     flash_version: int = 2
     global_layers: Optional[list[int]] = None
@@ -23,6 +26,7 @@ class SSMConfig:
     expand: int = 2
     d_state: int = 128
     d_conv: int = 4
+    dropout: float = 0.0
 
 
 @dataclass
@@ -36,9 +40,25 @@ class FusionConfig:
 class MLPConfig:
     type: str = "swiglu"
     expand: int = 4
+    dropout: float = 0.0
     n_experts: int = 0
     top_k: int = 2
     balance_mode: Optional[str] = None
+
+
+@dataclass
+class NormConfig:
+    type: str = "rmsnorm"
+    eps: float = 1e-6
+
+
+@dataclass
+class EmbeddingConfig:
+    type: str = "token"
+    rope_theta: float = 10000.0
+    rope_scaling: Optional[str] = None
+    max_position_embeddings: int = 2048
+    num_meta_tokens: int = 0
 
 
 @dataclass
@@ -49,6 +69,8 @@ class ArchitectureConfig:
     ssm: SSMConfig = field(default_factory=SSMConfig)
     fusion: FusionConfig = field(default_factory=FusionConfig)
     mlp: MLPConfig = field(default_factory=MLPConfig)
+    norm: NormConfig = field(default_factory=NormConfig)
+    embedding: EmbeddingConfig = field(default_factory=EmbeddingConfig)
 
 
 @dataclass
@@ -119,7 +141,7 @@ class HymbaPlusConfig:
         optimization = data.get("optimization", {})
         training = data.get("training", {})
 
-        config = cls(
+        return cls(
             name=model.get("name", cls.name),
             d_model=model.get("d_model", cls.d_model),
             n_layers=model.get("n_layers", cls.n_layers),
@@ -130,7 +152,6 @@ class HymbaPlusConfig:
             optimization=_build_optimization(optimization),
             training=_build_training(training),
         )
-        return config
 
 
 def _build_architecture(data: Dict[str, Any]) -> ArchitectureConfig:
@@ -141,6 +162,8 @@ def _build_architecture(data: Dict[str, Any]) -> ArchitectureConfig:
         ssm=SSMConfig(**data.get("ssm", {})),
         fusion=FusionConfig(**data.get("fusion", {})),
         mlp=MLPConfig(**data.get("mlp", {})),
+        norm=NormConfig(**data.get("norm", {})),
+        embedding=EmbeddingConfig(**data.get("embedding", {})),
     )
 
 

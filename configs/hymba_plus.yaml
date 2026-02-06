@@ -1,5 +1,7 @@
 model:
   name: "hymba_plus"
+  d_model: 256
+  n_layers: 6
   d_model: 512
   n_layers: 12
   n_heads: 8
@@ -11,6 +13,11 @@ architecture:
   block_pattern: "parallel"
 
   attention:
+    type: "standard"
+    num_heads: 8
+    num_kv_heads: 4
+    dropout: 0.1
+    use_flash: false
     type: "differential_mla"
     global_layers: [0, 6, 11]
     local_type: "sliding_window"
@@ -23,6 +30,7 @@ architecture:
     expand: 2
     d_state: 128
     d_conv: 4
+    dropout: 0.1
 
   fusion:
     type: "adaptive"
@@ -30,6 +38,24 @@ architecture:
     learnable: true
 
   mlp:
+    type: "moe"
+    expand: 4
+    dropout: 0.1
+    n_experts: 4
+    top_k: 2
+    balance_mode: "aux_loss_free"
+
+  norm:
+    type: "rmsnorm"
+    eps: 1e-6
+
+  embedding:
+    type: "token"
+    rope_theta: 10000.0
+    rope_scaling: null
+    max_position_embeddings: 2048
+    num_meta_tokens: 0
+
     type: "sparse_moe"
     expand: 4
     n_experts: 16
