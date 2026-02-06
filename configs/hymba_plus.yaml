@@ -1,0 +1,84 @@
+model:
+  name: "hymba_plus"
+  d_model: 256
+  n_layers: 6
+  n_heads: 8
+  n_kv_heads: 4
+  vocab_size: 32000
+
+architecture:
+  transformer_ratio: 0.5
+  block_pattern: "parallel"
+
+  attention:
+    type: "standard"
+    num_heads: 8
+    num_kv_heads: 4
+    dropout: 0.1
+    use_flash: false
+    flash_version: 3
+
+  ssm:
+    type: "mamba2"
+    expand: 2
+    d_state: 128
+    d_conv: 4
+    dropout: 0.1
+
+  fusion:
+    type: "adaptive"
+    init_beta: 0.5
+    learnable: true
+
+  mlp:
+    type: "moe"
+    expand: 4
+    dropout: 0.1
+    n_experts: 4
+    top_k: 2
+    balance_mode: "aux_loss_free"
+
+  norm:
+    type: "rmsnorm"
+    eps: 1e-6
+
+  embedding:
+    type: "token"
+    rope_theta: 10000.0
+    rope_scaling: "linear"
+    rope_scale_factor: 1.5
+    max_position_embeddings: 2048
+    num_meta_tokens: 0
+
+optimization:
+  quantization:
+    enabled: false
+    method: "fp8"
+
+  kernels:
+    use_triton: false
+    use_flash_attention: false
+
+  memory:
+    gradient_checkpointing: false
+    kv_cache_compression: false
+
+training:
+  stage: "pretrain"
+
+  pretrain:
+    batch_size: 8
+    learning_rate: 3e-4
+    warmup_steps: 1000
+    max_steps: 100000
+
+  sft:
+    batch_size: 8
+    learning_rate: 1e-5
+    epochs: 3
+
+  rl:
+    method: "grpo"
+    batch_size: 4
+    learning_rate: 1e-6
+    group_size: 8
