@@ -60,25 +60,25 @@ optimization:
     use_flash_attention: false
 
   memory:
-    gradient_checkpointing: false
+    gradient_checkpointing: true
     kv_cache_compression: false
 
 training:
   stage: "pretrain"
 
   pretrain:
-    batch_size: 8
+    batch_size: 32
     learning_rate: 3e-4
     warmup_steps: 1000
     max_steps: 100000
 
   sft:
-    batch_size: 8
+    batch_size: 16
     learning_rate: 1e-5
     epochs: 3
 
   rl:
     method: "grpo"
-    batch_size: 4
+    batch_size: 8
     learning_rate: 1e-6
     group_size: 8
