@@ -93,10 +93,10 @@
 /ARCHITECTURE.md
 /README.md
 /hymba_plus
-  /core
-  /components
-  /blocks
-  /models
-/configs
-/training
+  /core           # config, registry, base classes
+  /components     # component stubs
+  /blocks         # block stubs
+  /models         # model skeletons
+/configs          # nested YAML configs (loader supported)
+/training         # placeholders
 ```
