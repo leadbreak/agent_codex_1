@@ -15,7 +15,7 @@ def main() -> None:
     config = HymbaPlusConfig.from_yaml(args.config)
     model = HymbaPlus(config)
     torch.save({"state_dict": model.state_dict(), "config": config}, args.out)
-    print(f"saved {args.out}")
+    print(f"모델을 저장했습니다: {args.out}")
 
 
 if __name__ == "__main__":

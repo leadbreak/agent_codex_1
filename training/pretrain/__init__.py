@@ -1,1 +1,1 @@
-"""Pretraining placeholders."""
+"""사전학습 모듈."""

@@ -10,7 +10,7 @@ from training.utils.scheduler import CosineSchedule
 
 @dataclass
 class PretrainConfig:
-    """Nanochat-style pretraining config."""
+    """nanochat 스타일 사전학습 설정."""
 
     max_steps: int = 100
     warmup_steps: int = 10
@@ -22,7 +22,7 @@ class PretrainConfig:
 
 
 class PretrainTrainer:
-    """Minimal trainer with cosine LR, warmup, grad accumulation, and bf16."""
+    """코사인 스케줄, 워밍업, 누적 그라디언트, BF16을 포함한 트레이너."""
 
     def __init__(self, model: nn.Module, config: PretrainConfig) -> None:
         self.model = model

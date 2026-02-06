@@ -17,7 +17,7 @@ def main() -> None:
 
     input_ids = torch.randint(0, config.vocab_size, (2, 16))
     out = model(input_ids)
-    print("logits", out.logits.shape)
+    print("로그잇 텐서 크기:", out.logits.shape)
 
 
 if __name__ == "__main__":

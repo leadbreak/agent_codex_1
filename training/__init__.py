@@ -1,1 +1,1 @@
-"""Training pipelines placeholder."""
+"""학습 파이프라인 모듈."""

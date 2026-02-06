@@ -11,12 +11,10 @@ from hymba_plus.components.embedding.rope import RotaryEmbedding
 
 
 class StandardAttention(nn.Module):
-    """Multi-head attention with optional FlashAttention (via PyTorch SDP).
+    """멀티헤드 어텐션 구현.
 
-    Notes:
-    - FlashAttention v3 is not reimplemented here; we route to PyTorch SDP, which
-      will use Flash kernels when available on CUDA builds.
-    - Supports grouped-query attention (GQA) via `num_kv_heads`.
+    - PyTorch SDP 경로를 통해 Flash 커널 사용 가능(CUDA 환경)
+    - GQA(num_kv_heads) 지원
     """
 
     def __init__(
@@ -31,9 +29,9 @@ class StandardAttention(nn.Module):
     ) -> None:
         super().__init__()
         if d_model % num_heads != 0:
-            raise ValueError("d_model must be divisible by num_heads")
+            raise ValueError("d_model은 num_heads로 나누어 떨어져야 합니다.")
         if num_heads % num_kv_heads != 0:
-            raise ValueError("num_heads must be divisible by num_kv_heads")
+            raise ValueError("num_heads는 num_kv_heads로 나누어 떨어져야 합니다.")
 
         self.d_model = d_model
         self.num_heads = num_heads
@@ -61,7 +59,7 @@ class StandardAttention(nn.Module):
         is_causal: bool,
     ) -> torch.Tensor:
         if not q.is_cuda:
-            raise RuntimeError("Flash attention requires CUDA tensors")
+            raise RuntimeError("Flash 경로는 CUDA 텐서가 필요합니다.")
         with torch.backends.cuda.sdp_kernel(enable_flash=True, enable_math=False, enable_mem_efficient=False):
             return F.scaled_dot_product_attention(q, k, v, attn_mask=attn_mask, dropout_p=0.0, is_causal=is_causal)
 

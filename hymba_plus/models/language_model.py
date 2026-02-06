@@ -23,7 +23,7 @@ class ModelOutput:
 
 
 class HymbaPlus(BaseModel, nn.Module):
-    """Minimal but runnable Hymba+ language model."""
+    """Hymba+ 언어 모델 (실행 가능한 최소 구현)."""
 
     def __init__(self, config: HymbaPlusConfig) -> None:
         super().__init__()

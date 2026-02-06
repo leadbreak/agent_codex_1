@@ -1,49 +1,31 @@
 # Hymba+
 
-Hymba+ is a **modular hybrid Transformer–SSM architecture** with runnable core components, training scripts, and a validation notebook. This repository is intentionally honest: heavy kernels (FlashAttention‑3, Triton, FP8) are **not** fully included, but extension points and configuration are wired for future integration.
+Hymba+는 **모듈형 하이브리드 Transformer–SSM 아키텍처**를 구현하기 위한 실동작 스캐폴드입니다. 본 저장소는 과장된 약속을 피하고, 실행 가능한 핵심 구성과 확장 포인트를 제공하는 것을 목표로 합니다.
 
-## Highlights
+## 핵심 특징
 
-- Modular components (attention, SSM, MLP, fusion, norm, embeddings).
-- Hybrid blocks (Transformer / Mamba-like / Hybrid).
-- Deterministic nested YAML → dataclass configuration loader.
-- Scripts for quick smoke tests (pretrain/SFT/RL/eval/export).
-- Validation notebook with intermediate outputs and basic visualization.
-- Optional Triton gate-fusion kernel for the SSM gating path when CUDA + Triton are available.
-- Flash attention path wired via PyTorch SDP when enabled (requires CUDA).
-- GQA-compatible attention and vectorized MoE (batched expert matmul).
-- Nanochat-style training loop primitives (cosine LR, warmup, grad accumulation, bf16 autocast, grad clipping).
-Hymba+ is a **modular hybrid Transformer–SSM architecture** that targets flexible composition, modern training recipes, and production-ready optimization. This repository provides a **clean skeleton** plus a **critical review** of the supplied design docs, updated to 2026-era best practices.
+- 모듈형 컴포넌트(Attention, SSM, MLP, Fusion, Norm, Embedding).
+- 하이브리드 블록(Transformer / Mamba 유사 / Hybrid).
+- 중첩 YAML → dataclass 로더로 구성 재현성 보장.
+- Pretrain/SFT/RL/평가/내보내기 스크립트 제공.
+- 검증용 노트북(중간 출력, 파라미터 수, 시각화).
+- CUDA + Triton 사용 가능 시 SSM 게이팅 경로의 Triton 커널 사용.
+- PyTorch SDP 경로를 통한 Flash Attention 사용(가능한 경우).
+- GQA 지원 Attention 및 벡터화된 MoE.
+- nanochat 스타일 학습 루프(코사인 LR, 워밍업, Grad Accum, BF16, Grad Clip).
 
-## What's in this repo
-
-- **`ARCHITECTURE.md`**: consolidated design + 2026-era updates and correctness cautions.
-- **`hymba_plus/`**: minimal, working registry + config loader + model scaffolding.
-- **`configs/`**: YAML configs matching the dataclass loader (nested → flat mapping).
-- **`training/`**: placeholders for pretrain/SFT/RL with clear extension points.
-
-## Quick start
+## 빠른 시작
 
 ```bash
 python scripts/evaluate.py --config configs/hymba_plus.yaml
 ```
 
-## Validation notebook
+## 노트북
 
-Open `notebooks/01_validation.ipynb` to verify:
-- model construction
-- forward pass
-- parameter counts
-- basic logits visualization
+- `notebooks/01_validation.ipynb`: 모델 초기화/전방 패스/파라미터/로그잇 시각화
+- `notebooks/02_training_stages.ipynb`: 학습 단계별 흐름 이해 및 손실 곡선 시각화
+- `notebooks/03_model_comparison.ipynb`: 모델 변형 비교와 지표 정리
 
-## Repository status
+## 상태
 
-This is a **starter scaffold**. It runs, but it is **not** optimized for speed. See `ARCHITECTURE.md` for the critical review and 2026‑era roadmap.
-python -c "from hymba_plus.core.config import HymbaPlusConfig; cfg = HymbaPlusConfig.from_yaml('configs/hymba_plus.yaml'); print(cfg)"
-```
-
-## Repository status
-
-This repository intentionally **starts minimal**: the structure is production-aligned, but heavy kernels (FlashAttention3/Triton/FP8) are **not implemented**. The goal is to avoid false claims and to provide **clear extension points** for real kernels and training loops.
-
-See `ARCHITECTURE.md` for the full critique and an implementation roadmap.
+이 저장소는 **실행 가능한 스캐폴드**이며, 성능 최적화(FA3/Triton/FP8)는 향후 통합을 전제로 합니다. 상세 비판 리뷰와 로드맵은 `ARCHITECTURE.md`를 참고하세요.

@@ -34,6 +34,7 @@ def main() -> None:
         ),
     )
     trainer.train(make_dataloader(config, args.steps))
+    print("SFT 데모가 완료되었습니다.")
 
 
 if __name__ == "__main__":

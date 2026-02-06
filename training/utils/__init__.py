@@ -1,1 +1,1 @@
-"""Training utils placeholders."""
+"""학습 유틸리티 모듈."""

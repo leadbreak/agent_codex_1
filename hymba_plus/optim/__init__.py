@@ -1,1 +1,1 @@
-"""Optimization utilities and optional kernels."""
+"""최적화 유틸리티와 선택적 커널 모듈."""

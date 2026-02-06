@@ -1,1 +1,1 @@
-"""SFT placeholders."""
+"""SFT 모듈."""

@@ -5,8 +5,8 @@ from typing import Any
 
 
 class Component(ABC):
-    """Base class for all components."""
+    """모든 구성요소의 추상 기본 클래스."""
 
     @abstractmethod
-    def forward(self, *args: Any, **kwargs: Any) -> Any:  # pragma: no cover - interface only
+    def forward(self, *args: Any, **kwargs: Any) -> Any:  # pragma: no cover
         raise NotImplementedError

@@ -1,115 +1,93 @@
-# Hymba+ Architecture (2026 Review + Build Plan)
+# Hymba+ 아키텍처 (2026 리뷰 + 구현 계획)
 
-> **Positioning**: This document consolidates the provided design notes into a critical, production‑oriented plan. It flags mismatches, missing pieces, and 2026‑era best practices that must be present for a credible implementation.
+> **포지셔닝**: 이 문서는 제공된 설계 문서를 비판적으로 재검토하고, 실제 구현 관점에서 필요한 수정/보강 사항을 2026 기준으로 정리합니다.
 
-## 1) Executive assessment
+## 1) 총평
 
-The original documents describe a highly modular hybrid model (Transformer + SSM) with rich recipes, kernels, and RL alignment. However, **most of those claims are aspirational**: there is no guarantee of kernel availability, config compatibility, cache correctness, or training stability. A production‑grade Hymba+ must explicitly address correctness (cache/positioning), config reproducibility, and performance realism (vectorized MoE, real SSM kernels).
+기존 문서는 고도로 모듈화된 하이브리드 모델을 제시하지만, **현실적 구현/검증이 부족**합니다. 캐시 정합성, 구성 재현성, 실제 커널 존재 여부 등 핵심 위험을 해결하지 않으면 신뢰 가능한 시스템이 될 수 없습니다. 본 저장소는 다음 원칙을 지킵니다.
 
-This repository is built to:
-1. **Avoid false claims** (no stubbed “FlashAttention3” without real kernels),
-2. **Make config and model wiring deterministic**, and
-3. Provide **extension points** for true 2026‑level optimizations (FP8, kernel fusion, cache compression).
+1. **허위 과장 금지**: 실제 구현되지 않은 커널/기법은 기본 활성화하지 않음
+2. **구성 재현성 보장**: 중첩 YAML → dataclass 로더로 확정적 구성
+3. **확장 포인트 명확화**: Triton/FA3/FP8 등은 분리된 경로로 확장
 
-## 2) Critical review of existing docs (what’s correct vs. risky)
+## 2) 문서 검토 결과 (핵심 문제)
 
-### ✅ Valid architecture ideas
-- **Registry‑based component composition** is correct and necessary for modularity.
-- **Recipe system** is a good UX for switching between pure Transformer, pure SSM, and hybrid.
-- **Hybrid ratio** is useful if it is implemented *explicitly* (interleaved vs. parallel blocks).
-- **GRPO/DPO** are appropriate alignment choices when data availability differs.
+### ✅ 타당한 아이디어
+- Registry 기반 모듈 구성
+- 레시피 기반 모델 생성
+- Transformer/SSM 비율 기반 설계
+- GRPO/DPO 중심의 정렬 단계
 
-### ⚠️ Risks and gaps
-1. **Cache + meta tokens correctness**
-   - Meta tokens must be injected **only on the first step** of generation; otherwise KV caches corrupt.
-   - Position IDs must be **offset by cached length** to maintain RoPE correctness.
+### ⚠️ 위험 요인
+1. **KV 캐시/포지션 정합성**
+   - 메타 토큰이 반복 삽입되면 캐시가 붕괴됨
+   - 포지션 ID가 캐시 길이를 고려하지 않으면 RoPE 오류 발생
 
-2. **Configuration mismatch**
-   - Nested YAML structures do not align with most dataclass loaders. This causes silent config drift.
-   - A **deterministic loader** that maps nested YAML → flat dataclass is required.
+2. **구성 스키마 불일치**
+   - YAML 구조와 dataclass가 불일치하면 재현성 붕괴
 
-3. **Hybrid block semantics**
-   - If “sliding‑window attention” is auto‑applied to non‑global layers, then a “pure Transformer” is not actually pure.
-   - Hybrid blocks need explicit `block_pattern`: `parallel`, `interleaved`, or `custom`.
+3. **하이브리드 블록 의미 불일치**
+   - pure Transformer가 로컬 어텐션으로 변질될 위험
 
-4. **Performance realism**
-   - Any SSM that loops over sequence positions in Python is non‑viable.
-   - MoE routing must be **vectorized** (token grouping + batched expert calls). Python loops are unacceptable.
+4. **성능 비현실성**
+   - Python 루프 기반 SSM/MoE는 실사용 불가
 
-5. **Kernel claims**
-   - FlashAttention‑3, Triton kernels, FP8, and cache compression must only be advertised **if implemented**.
-   - Otherwise, expose them as optional future features, **not enabled by default**.
+5. **커널 허위 주장**
+   - FlashAttention-3, Triton, FP8 등은 구현되지 않았으면 비활성화가 원칙
 
-## 3) 2026-era best practices that must be included
+## 3) 2026 기준 필수 항목
 
-### 3.1 Correctness + reproducibility
-- **Deterministic config loader** with versioned schema.
-- **Cache‑aware position IDs** and **meta token gating**.
-- **Strict shape guards** (head dims, rotary dims, Mamba state dims).
-- **Seeded training** and dataset manifest logging.
+### 3.1 정확성
+- 캐시/메타 토큰 정합성
+- 포지션 오프셋 보정
+- 구성 유효성 검사
 
-### 3.2 Architecture enhancements
-- **None‑component stubs** (NoneAttention/NoneSSM/NoneFusion) to remove special‑case logic.
-- **Block pattern support**:
-  - `parallel`: attention + SSM fused per layer
-  - `interleaved`: attention and SSM blocks alternate
-  - `custom`: layer‑wise toggles
-- **RoPE scaling variants**: linear / NTK / YaRN for long context.
-- **KV cache compression** (MLA cache or quantized cache) optional path.
+### 3.2 구조
+- None 컴포넌트 도입
+- block_pattern(병렬/교차/커스텀) 구현
+- RoPE 스케일링
 
-### 3.3 Performance pathways
-- **SSM**: chunked scan or fused kernel (Triton/CUDA). Avoid Python loops.
-- **MoE**: vectorized routing + optional fused kernels.
-- **FlashAttention‑3**: use only with hardware‑valid FP8/FP16 paths and gated by runtime checks.
-- **Current repository** includes a minimal Triton gate‑fusion kernel as a first step toward SSM kernelization.
-- **Current repository** routes FlashAttention through PyTorch SDP, which selects Flash kernels on supported CUDA builds.
+### 3.3 성능
+- SSM: chunked/fused 커널
+- MoE: 벡터화/퓨전 커널
+- FlashAttention-3: 하드웨어 조건 하에 활성화
 
-### 3.4 Training + alignment
-- **Stage 0**: data curation and tokenizer lock‑in (single tokenizer across chat + time‑series).
-- **Stage 1**: pretrain with curriculum on sequence length and mixture weights.
-- **Stage 2**: SFT with structured tool‑call schemas.
-- **Stage 3**: GRPO (verifiable) or DPO (preference). Use length/style penalties.
-- **Stage 4**: distillation (logit + sequence). Preserve specialized heads.
-- **Stage 5**: PTQ/QAT + post‑quant alignment.
+### 3.4 학습
+- 데이터 준비(혼합 비율/필터링)
+- SFT/GRPO/DPO
+- Distillation + QAT/PTQ
 
-## 4) This repository: what is implemented now
+## 4) 현재 저장소 구현 상태
 
-This repo intentionally implements **only the core scaffolding** to make the system honest and buildable:
+- **Registry + Config 로더** 구현
+- **기본 Attention/SSM/MLP/Fusion** 구현
+- **Triton 게이트 커널**(SSM 게이팅 경로) 제공
+- **PyTorch SDP 기반 Flash 경로** 제공
+- **nanochat 스타일 학습 루프 구성 요소** 제공
 
-- **Registry**: minimal, deterministic component registry.
-- **Config**: dataclass‑based config + nested YAML loader.
-- **Model skeleton**: a minimal `HymbaPlus` class that wires config and registry.
-- **Clear extension points** for kernels, MoE, and training.
-- **Triton gate‑fusion kernel** used in the SSM gating path when available.
-- **Flash attention path** via PyTorch SDP for CUDA builds (not a full FA3 implementation).
-- **Nanochat‑style training loop primitives** (cosine schedule, warmup, bf16 autocast, grad accumulation, grad clipping).
-- **Vectorized MoE** with batched expert matmul (no Python token loops).
+> 주의: FlashAttention-3 자체를 재현한 구현은 아님. PyTorch SDP가 내부적으로 Flash 커널을 사용할 수 있을 때만 동작합니다.
 
-Everything else is left as **explicit TODOs**, not marketing claims.
+## 5) 향후 우선순위
 
-## 5) Implementation roadmap (priority order)
+### P0 (정확성)
+- 캐시/포지션 정합성 테스트
+- 구성 스키마 검증
 
-### P0 — Correctness
-- Cache/meta‑token gating + position ID offsets.
-- Strict config validation (head dims, rope dims).
-- Unit tests for cache correctness and config parsing.
+### P1 (완성도)
+- block_pattern 지원
+- None 컴포넌트
+- 시계열 헤드
 
-### P1 — Architecture completeness
-- `block_pattern` support.
-- None‑components.
-- Time‑series tokenizer + forecaster head.
+### P2 (성능)
+- SSM 커널화
+- MoE 커널화
 
-### P2 — Performance
-- SSM kernel (chunked or fused).
-- MoE routing vectorization.
-- Optional FlashAttention‑3 and cache compression.
-
-### P3 — Evaluation
-- LM eval harness, time‑series benchmarks, and tool‑call accuracy tests.
+### P3 (평가)
+- 벤치마크 + 도구 사용 검증
 
 ---
 
-## Appendix: structure of this repo
+## 부록: 디렉터리 구조
 
 ```
 /ARCHITECTURE.md

@@ -7,10 +7,10 @@ from hymba_plus.optim.kernels import TRITON_AVAILABLE, gate_mul
 
 
 class SimpleSSM(nn.Module):
-    """Lightweight SSM-like block using depthwise conv + gating.
+    """깊이별 합성곱 + 게이팅 기반의 경량 SSM 블록.
 
-    This is not a real Mamba kernel, but provides a vectorized stand-in that
-    exercises configuration and block wiring without false performance claims.
+    실제 Mamba 커널을 대체하지 않으며, 구성 검증과 실동작을 위한
+    벡터화된 대체 구현입니다.
     """
 
     def __init__(
