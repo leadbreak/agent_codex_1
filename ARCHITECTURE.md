@@ -35,27 +35,26 @@
 5. **커널 허위 주장**
    - FlashAttention-3, Triton, FP8 등은 구현되지 않았으면 비활성화가 원칙
 
-## 3) 2026 기준 필수 항목
+## 3) 최신 기법 리서치 요약 및 적용 방안
 
-### 3.1 정확성
-- 캐시/메타 토큰 정합성
-- 포지션 오프셋 보정
-- 구성 유효성 검사
+### 3.1 포지셔널 임베딩
+- **RoPE 스케일링**: 긴 문맥 확장을 위해 선형/NTK 계열 스케일링이 널리 사용됨.
+- **YaRN/NTK 계열**: 긴 컨텍스트에서 RoPE의 주파수 압축을 완화하는 기법.
+- **적용 방안**:
+  - `rope_scaling`(linear/ntk)과 `rope_scale_factor`를 설정으로 노출.
+  - RoPE 계산 시 스케일링된 position_ids를 사용.
 
-### 3.2 구조
-- None 컴포넌트 도입
-- block_pattern(병렬/교차/커스텀) 구현
-- RoPE 스케일링
+### 3.2 어텐션 최적화
+- **FlashAttention v3**: H100급 하드웨어에서 FP8 경로를 포함한 고속 커널.
+- **PyTorch SDP**: 지원 환경에서 Flash 커널을 자동 선택할 수 있는 안전한 경로.
+- **적용 방안**:
+  - 실제 FA3 커널은 별도 통합이 필요하므로 기본은 SDP 경로로 제공.
+  - CUDA 가능 시 SDP가 Flash 커널을 사용하도록 설정.
 
-### 3.3 성능
-- SSM: chunked/fused 커널
-- MoE: 벡터화/퓨전 커널
-- FlashAttention-3: 하드웨어 조건 하에 활성화
-
-### 3.4 학습
-- 데이터 준비(혼합 비율/필터링)
-- SFT/GRPO/DPO
-- Distillation + QAT/PTQ
+### 3.3 MoE 라우팅
+- **벡터화 라우팅**: 토큰 루프 제거, 배치/시퀀스 단위의 행렬 연산으로 대체.
+- **적용 방안**:
+  - batched expert matmul 방식으로 토큰별 Python 루프 제거.
 
 ## 4) 현재 저장소 구현 상태
 
@@ -64,6 +63,7 @@
 - **Triton 게이트 커널**(SSM 게이팅 경로) 제공
 - **PyTorch SDP 기반 Flash 경로** 제공
 - **nanochat 스타일 학습 루프 구성 요소** 제공
+- **RoPE 스케일링 옵션** 제공
 
 > 주의: FlashAttention-3 자체를 재현한 구현은 아님. PyTorch SDP가 내부적으로 Flash 커널을 사용할 수 있을 때만 동작합니다.
 
@@ -93,10 +93,10 @@
 /ARCHITECTURE.md
 /README.md
 /hymba_plus
-  /core           # config, registry, base classes
-  /components     # component stubs
-  /blocks         # block stubs
-  /models         # model skeletons
-/configs          # nested YAML configs (loader supported)
-/training         # placeholders
+  /core
+  /components
+  /blocks
+  /models
+/configs
+/training
 ```

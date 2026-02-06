@@ -13,6 +13,7 @@ Hymba+는 **모듈형 하이브리드 Transformer–SSM 아키텍처**를 구현
 - PyTorch SDP 경로를 통한 Flash Attention 사용(가능한 경우).
 - GQA 지원 Attention 및 벡터화된 MoE.
 - nanochat 스타일 학습 루프(코사인 LR, 워밍업, Grad Accum, BF16, Grad Clip).
+- RoPE 스케일링(linear/ntk) 옵션 제공.
 
 ## 빠른 시작
 

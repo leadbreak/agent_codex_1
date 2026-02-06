@@ -28,11 +28,15 @@ class HymbaPlus(BaseModel, nn.Module):
     def __init__(self, config: HymbaPlusConfig) -> None:
         super().__init__()
         self.config = config
+        self.config.validate()
+
         self.embed = TokenEmbedding(config.vocab_size, config.d_model)
         self.rope = RotaryEmbedding(
             dim=config.d_model // config.n_heads,
             theta=config.architecture.embedding.rope_theta,
             max_position_embeddings=config.architecture.embedding.max_position_embeddings,
+            rope_scaling=config.architecture.embedding.rope_scaling,
+            rope_scale_factor=config.architecture.embedding.rope_scale_factor,
         )
         self.layers = nn.ModuleList()
         use_triton = config.optimization.kernels.use_triton

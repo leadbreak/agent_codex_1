@@ -57,6 +57,7 @@ class EmbeddingConfig:
     type: str = "token"
     rope_theta: float = 10000.0
     rope_scaling: Optional[str] = None
+    rope_scale_factor: float = 1.0
     max_position_embeddings: int = 2048
     num_meta_tokens: int = 0
 
@@ -128,6 +129,15 @@ class HymbaPlusConfig:
     architecture: ArchitectureConfig = field(default_factory=ArchitectureConfig)
     optimization: OptimizationConfig = field(default_factory=OptimizationConfig)
     training: TrainingConfig = field(default_factory=TrainingConfig)
+
+    def validate(self) -> None:
+        """구성 값의 기본 유효성을 검사합니다."""
+        if self.d_model % self.n_heads != 0:
+            raise ValueError("d_model은 n_heads로 나누어 떨어져야 합니다.")
+        if self.n_heads % self.n_kv_heads != 0:
+            raise ValueError("n_heads는 n_kv_heads로 나누어 떨어져야 합니다.")
+        if self.architecture.embedding.rope_scale_factor <= 0:
+            raise ValueError("rope_scale_factor는 0보다 커야 합니다.")
 
     @classmethod
     def from_yaml(cls, path: str | Path) -> "HymbaPlusConfig":
